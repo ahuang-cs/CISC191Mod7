@@ -30,7 +30,7 @@ By the end of this lab, you should be able to:
 
 ## Required Tools
 
-- JDK 25
+- Eclipse Temurin JDK 21
 - Maven 3.9+
 - Git
 - IntelliJ IDEA, VS Code, Eclipse, or another Java IDE
@@ -97,10 +97,9 @@ mvn javafx:run
 Use the app to:
 
 1. Enter a player name.
-2. Pick a character class.
+2. Choose a difficulty.
 3. Pick a difficulty.
 4. Click **Join Match**.
-5. Try **Attack**, **Block**, **Heal**, **Special Move**, and **Load Match History**.
 
 ---
 
@@ -126,7 +125,7 @@ File:
 game-client/src/main/resources/view/game-client.fxml
 ```
 
-Add a ranked match checkbox near the player/class/difficulty controls.
+Add a ranked match checkbox near the player/difficulty controls.
 
 Suggested FXML:
 
