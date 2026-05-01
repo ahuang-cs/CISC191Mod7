@@ -1,0 +1,127 @@
+package edu.sdccd.cisc191.server;
+
+import edu.sdccd.cisc191.grpc.GameServiceGrpc;
+import edu.sdccd.cisc191.grpc.JoinMatchRequest;
+import edu.sdccd.cisc191.grpc.JoinMatchResponse;
+import edu.sdccd.cisc191.grpc.MatchHistoryRequest;
+import edu.sdccd.cisc191.grpc.MatchHistoryResponse;
+import edu.sdccd.cisc191.grpc.MatchResultResponse;
+import edu.sdccd.cisc191.grpc.PlayMatchRequest;
+import io.grpc.stub.StreamObserver;
+
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
+
+    private final Map<String, ServerMatch> matches = new ConcurrentHashMap<>();
+    private final Random random = new Random();
+
+    @Override
+    public void joinMatch(
+            JoinMatchRequest request,
+            StreamObserver<JoinMatchResponse> responseObserver
+    ) {
+        String playerName = request.getPlayerName().isBlank()
+                ? "Player"
+                : request.getPlayerName();
+
+        String difficulty = request.getDifficulty().isBlank()
+                ? "Normal"
+                : request.getDifficulty();
+
+        boolean ranked = request.getRanked();
+        String matchId = UUID.randomUUID().toString();
+
+        ServerMatch match = new ServerMatch(
+                matchId,
+                playerName,
+                "Bot (" + difficulty + ")",
+                difficulty,
+                ranked
+        );
+
+        matches.put(matchId, match);
+
+        JoinMatchResponse response = JoinMatchResponse.newBuilder()
+                .setMatchId(matchId)
+                .setPlayerName(match.playerName())
+                .setOpponentName(match.opponentName())
+                .setMessage("Joined " + match.matchType() + " match " + matchId
+                        + " on " + difficulty + " difficulty. Click Play Match to let the server choose a winner.")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void playMatch(
+            PlayMatchRequest request,
+            StreamObserver<MatchResultResponse> responseObserver
+    ) {
+        ServerMatch match = matches.get(request.getMatchId());
+
+        if (match == null) {
+            responseObserver.onNext(MatchResultResponse.newBuilder()
+                    .setMatchId(request.getMatchId())
+                    .setWinnerName("No winner")
+                    .setLoserName("No loser")
+                    .setMessage("Match not found. Join a match first.")
+                    .setPlayerWon(false)
+                    .build());
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean playerWon = random.nextBoolean();
+
+        String winner = playerWon ? match.playerName() : match.opponentName();
+        String loser = playerWon ? match.opponentName() : match.playerName();
+
+        MatchResultResponse response = MatchResultResponse.newBuilder()
+                .setMatchId(match.matchId())
+                .setWinnerName(winner)
+                .setLoserName(loser)
+                .setPlayerWon(playerWon)
+                .setMessage("Server result: " + winner + " defeated " + loser + " in a "
+                        + match.matchType() + " " + match.difficulty() + " match.")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void loadMatchHistory(
+            MatchHistoryRequest request,
+            StreamObserver<MatchHistoryResponse> responseObserver
+    ) {
+        String playerName = request.getPlayerName().isBlank()
+                ? "Player"
+                : request.getPlayerName();
+
+        MatchHistoryResponse response = MatchHistoryResponse.newBuilder()
+                .addMatches(playerName + " vs Bot: Win")
+                .addMatches(playerName + " vs Bot: Loss")
+                .addMatches(playerName + " vs Bot: Win")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    private record ServerMatch(
+            String matchId,
+            String playerName,
+            String opponentName,
+            String difficulty,
+            boolean ranked
+    ) {
+        private String matchType() {
+            return ranked ? "ranked" : "casual";
+        }
+    }
+}
