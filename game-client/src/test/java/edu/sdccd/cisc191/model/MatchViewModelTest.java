@@ -63,4 +63,23 @@ class MatchViewModelTest {
         player.setName("   ");
         assertEquals("Player", player.getName());
     }
+
+    @Test
+    void buildMatchSummaryFormatsJoinedRankedMatch() {
+        MatchViewModel model = new MatchViewModel();
+        model.setMatchId("match-001");
+        model.getPlayer().setName("Ada");
+        model.getOpponent().setName("Bot");
+
+        assertEquals("Match match-001: Ada vs Bot (Hard, ranked)",
+                model.buildMatchSummary("Hard", true));
+    }
+
+    @Test
+    void buildMatchSummaryHandlesNoMatchAndDefaultDifficulty() {
+        MatchViewModel model = new MatchViewModel();
+
+        assertEquals("No match", model.buildMatchSummary("   ", false));
+    }
+
 }

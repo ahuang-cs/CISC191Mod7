@@ -47,6 +47,23 @@ public class MatchViewModel {
         return hasJoinedMatch() && !matchOver;
     }
 
+    /**
+     * TODO 2: Complete this MVC helper.
+     *
+     * Return a short summary for the bottom of the JavaFX screen.
+     * Expected format:
+     * Match match-001: Ada vs Bot (Hard, ranked)
+     *
+     * Requirements:
+     * - Use "No match" when matchId is null or blank.
+     * - Use the current player and opponent names from this model.
+     * - Use "Normal" when difficulty is null or blank.
+     * - Use "ranked" when ranked is true, otherwise "casual".
+     */
+    public String buildMatchSummary(String difficulty, boolean ranked) {
+        return "TODO: build match summary";
+    }
+
     public void resetLocalState() {
         matchId = null;
         player.setName("Player");

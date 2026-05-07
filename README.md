@@ -9,7 +9,7 @@ In this lab, you will complete a two-module Maven project:
 | `game-server` | gRPC server that owns match state and game rules |
 | `game-client` | JavaFX client using FXML, MVC, JavaFX `Task`, and gRPC |
 
-The starter code already builds and runs. Your job is to complete the TODOs for FXML, MVC, and gRPC.
+The baseline app already builds and runs as a simple 1v1 match simulator. The server creates matches, chooses a random winner, and returns simple match history. Your job is to complete the new TODOs so the app shows a consistent **match summary** across the JavaFX UI, MVC model, controller, gRPC client, `.proto` contract, and gRPC server.
 
 ---
 
@@ -20,11 +20,12 @@ By the end of this lab, you should be able to:
 - Build a multi-module Maven project.
 - Run a Java gRPC server.
 - Run a JavaFX client.
-- Use FXML to define a JavaFX UI.
+- Use FXML to define and update a JavaFX UI.
 - Connect FXML controls to a controller.
-- Use MVC-style organization.
+- Use MVC-style helper methods to keep display logic out of event handlers.
 - Use JavaFX `Task` to keep the UI responsive.
 - Modify a `.proto` file and update both client and server code.
+- Use unit tests to guide feature completion.
 
 ---
 
@@ -97,9 +98,11 @@ mvn javafx:run
 Use the app to:
 
 1. Enter a player name.
-2. Choose a difficulty.
+2. Choose whether the match is ranked.
 3. Pick a difficulty.
 4. Click **Join Match**.
+5. Click **Play Match**.
+6. Click **Load Match History**.
 
 ---
 
@@ -117,7 +120,7 @@ The GitHub Classroom workflow will also run tests automatically when you push.
 
 # Required TODOs
 
-## TODO 1: FXML
+## TODO 1: FXML layer
 
 File:
 
@@ -125,24 +128,25 @@ File:
 game-client/src/main/resources/view/game-client.fxml
 ```
 
-Add a ranked match checkbox near the player/difficulty controls.
+Add a new label to the bottom status area so the user can see the current match summary.
 
-Suggested FXML:
+Required label:
 
 ```xml
-<CheckBox fx:id="rankedMatchCheckBox" text="Ranked" />
+<Label fx:id="matchSummaryLabel" text="Summary: No match" />
 ```
 
-Then update the controller with:
+Recommended location: place it near the existing player, opponent, and winner labels.
 
-```java
-@FXML
-private CheckBox rankedMatchCheckBox;
+Test that checks this layer:
+
+```text
+game-client/src/test/java/edu/sdccd/cisc191/model/FxmlTodoTest.java
 ```
 
 ---
 
-## TODO 2: MVC
+## TODO 2: MVC/model layer
 
 File:
 
@@ -150,54 +154,175 @@ File:
 game-client/src/main/java/edu/sdccd/cisc191/model/MatchViewModel.java
 ```
 
-Add a method that checks whether the special move should be allowed.
-
-Example:
+Complete:
 
 ```java
-public boolean canUseSpecialMove() {
-    return hasJoinedMatch() && !matchOver && opponent.getHp() > 0;
-}
+public String buildMatchSummary(String difficulty, boolean ranked)
 ```
 
-Then update:
+Required behavior:
+
+| Situation | Expected result |
+|---|---|
+| No joined match | `No match` |
+| Joined ranked hard match | `Match match-001: Ada vs Bot (Hard, ranked)` |
+| Blank difficulty | Use `Normal` |
+| `ranked == true` | Use `ranked` |
+| `ranked == false` | Use `casual` |
+
+Test that checks this layer:
+
+```text
+game-client/src/test/java/edu/sdccd/cisc191/model/MatchViewModelTest.java
+```
+
+---
+
+## TODO 3: Controller layer
+
+File:
 
 ```text
 game-client/src/main/java/edu/sdccd/cisc191/controller/GameController.java
 ```
 
-Use the model method before sending the `SPECIAL` action.
+Complete:
+
+```java
+public static String buildJoinLogMessage(String playerName, String difficulty, boolean ranked)
+```
+
+Required behavior:
+
+| Input | Expected result |
+|---|---|
+| `"Ada", "Hard", true` | `Joining ranked match as Ada on Hard difficulty...` |
+| blank player, blank difficulty, false | `Joining casual match as Player on Normal difficulty...` |
+
+Then use the helper in `handleJoinMatch()` so the controller does not build the message inline.
+
+Test that checks this layer:
+
+```text
+game-client/src/test/java/edu/sdccd/cisc191/controller/GameControllerTest.java
+```
 
 ---
 
-## TODO 3: gRPC
+## TODO 4: gRPC client layer
 
-Update the gRPC contract in both modules:
+File:
+
+```text
+game-client/src/main/java/edu/sdccd/cisc191/service/GameGrpcClient.java
+```
+
+Complete:
+
+```java
+public static JoinMatchRequest buildJoinMatchRequest(String playerName, String difficulty, boolean ranked)
+```
+
+Required behavior:
+
+- Return a `JoinMatchRequest`.
+- Trim `playerName` and `difficulty`.
+- Use `Player` when the player name is null or blank.
+- Use `Normal` when difficulty is null or blank.
+- Preserve the ranked value.
+
+Then update `joinMatchTask()` to use this helper.
+
+Test that checks this layer:
+
+```text
+game-client/src/test/java/edu/sdccd/cisc191/service/GameGrpcClientTest.java
+```
+
+---
+
+## TODO 5: gRPC contract layer
+
+Update both proto files:
 
 ```text
 game-server/src/main/proto/game_service.proto
 game-client/src/main/proto/game_service.proto
 ```
 
-Add ranked match data to `JoinMatchRequest`:
+Add a server-created summary field to `JoinMatchResponse`:
 
 ```proto
-bool ranked = 4;
+string summary = 5;
 ```
 
-Then update:
+After changing the `.proto` files, rebuild the project so Maven regenerates the gRPC Java classes:
 
-| File | Required Change |
-|---|---|
-| `GameController.java` | Send `rankedMatchCheckBox.isSelected()` to the gRPC client |
-| `GameGrpcClient.java` | Add the ranked value to `JoinMatchRequest` |
-| `GameServiceImpl.java` | Read `request.getRanked()` and include it in the join message |
+```bash
+mvn clean install
+```
 
-Example server message:
+Tests that check this layer:
 
 ```text
-Joined ranked match abc-123 on Hard difficulty.
+game-server/src/test/java/edu/sdccd/cisc191/server/ProtoContractTodoTest.java
+game-client/src/test/java/edu/sdccd/cisc191/model/ProtoContractTodoTest.java
 ```
+
+---
+
+## TODO 6: gRPC server layer
+
+File:
+
+```text
+game-server/src/main/java/edu/sdccd/cisc191/server/GameServiceImpl.java
+```
+
+Complete:
+
+```java
+public static String buildJoinSummary(
+        String matchId,
+        String playerName,
+        String opponentName,
+        String difficulty,
+        boolean ranked
+)
+```
+
+Required behavior:
+
+| Situation | Expected result |
+|---|---|
+| Blank match id | `No match` |
+| Joined ranked hard match | `Match match-001: Ada vs Bot (Hard, ranked)` |
+| Blank player | Use `Player` |
+| Blank opponent | Use `Bot` |
+| Blank difficulty | Use `Normal` |
+
+Then update `joinMatch()` to set the new proto summary field:
+
+```java
+.setSummary(buildJoinSummary(...))
+```
+
+Test that checks this layer:
+
+```text
+game-server/src/test/java/edu/sdccd/cisc191/server/GameServiceImplTest.java
+```
+
+---
+
+## Final integration requirement
+
+After all TODOs are complete:
+
+1. `mvn clean install` should pass.
+2. The JavaFX UI should show the summary label.
+3. Joining a match should update the summary using the server-provided summary.
+4. Resetting the local view should return the summary to `Summary: No match`.
 
 ---
 
@@ -218,48 +343,25 @@ Choose one:
 
 # README Reflection
 
-Replace this section with your answers before submitting.
+Answer these questions in your pull request or in a short reflection file:
 
-1. Which Maven module is the server?
-2. Which Maven module is the JavaFX client?
-3. Which file defines the gRPC service contract?
-4. Which file defines the FXML view?
-5. Which class is the JavaFX controller?
-6. Which class acts as the client-side model?
-7. Why do gRPC calls run inside JavaFX `Task` objects?
-8. What happens if the JavaFX client runs before the server?
+1. What is the purpose of FXML in this project?
+2. What is the controller responsible for?
+3. What is the model responsible for?
+4. What is the gRPC server responsible for?
+5. Why should JavaFX network calls run inside a `Task` instead of directly in the button handler?
+6. What changed in the `.proto` file?
+7. Why do both the client and server need matching `.proto` files?
+8. What does Maven regenerate after a `.proto` change?
 9. How did you complete the FXML TODO?
-10. How did you complete the MVC TODO?
-11. How did you complete the gRPC TODO?
-12. What was the hardest part?
+10. How did you complete the MVC/model TODO?
+11. How did you complete the controller TODO?
+12. How did you complete the gRPC client TODO?
+13. How did you complete the gRPC server TODO?
+14. Which unit test helped you the most, and why?
 
 ---
 
-# Grading Rubric
-
-| Category | Points |
-|---|---:|
-| Multi-module Maven project builds | 15 |
-| gRPC server runs | 15 |
-| JavaFX client runs | 15 |
-| Client joins a match through gRPC | 10 |
-| Actions update HP through gRPC | 10 |
-| FXML ranked checkbox completed | 10 |
-| MVC special move validation completed | 10 |
-| gRPC proto/client/server ranked update completed | 10 |
-| Reflection answers completed | 5 |
-| **Total** | **100** |
-
----
-
-# GitHub Classroom Autograding
-
-This repository includes:
-
-```text
-.github/workflows/classroom.yml
-```
-
-The workflow checks that the project builds and tests pass.
+# GitHub Classroom Notes
 
 Autograding does not replace manual review. Your instructor may still inspect your TODOs, README, and code quality.

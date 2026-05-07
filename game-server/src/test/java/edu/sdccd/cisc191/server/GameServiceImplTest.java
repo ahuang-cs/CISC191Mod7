@@ -92,6 +92,33 @@ class GameServiceImplTest {
         assertTrue(observer.value.getMatchesCount() >= 3);
     }
 
+
+    @Test
+    void buildJoinSummaryFormatsRankedMatch() {
+        String summary = GameServiceImpl.buildJoinSummary(
+                "match-001",
+                "Ada",
+                "Bot",
+                "Hard",
+                true
+        );
+
+        assertEquals("Match match-001: Ada vs Bot (Hard, ranked)", summary);
+    }
+
+    @Test
+    void buildJoinSummaryDefaultsMissingValues() {
+        String summary = GameServiceImpl.buildJoinSummary(
+                "   ",
+                null,
+                "   ",
+                "   ",
+                false
+        );
+
+        assertEquals("No match", summary);
+    }
+
     private static class TestObserver<T> implements StreamObserver<T> {
         private T value;
         private Throwable error;

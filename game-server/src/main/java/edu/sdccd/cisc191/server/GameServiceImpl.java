@@ -57,6 +57,30 @@ public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * TODO 6: Complete this server-side summary helper, then use it in JoinMatchResponse
+     * after adding the new summary field to the .proto file.
+     *
+     * Expected format:
+     * Match match-001: Ada vs Bot (Hard, ranked)
+     *
+     * Requirements:
+     * - Use "No match" when matchId is null or blank.
+     * - Use "Player" when playerName is null or blank.
+     * - Use "Bot" when opponentName is null or blank.
+     * - Use "Normal" when difficulty is null or blank.
+     * - Use "ranked" when ranked is true, otherwise "casual".
+     */
+    public static String buildJoinSummary(
+            String matchId,
+            String playerName,
+            String opponentName,
+            String difficulty,
+            boolean ranked
+    ) {
+        return "TODO: build join summary";
+    }
+
     @Override
     public void playMatch(
             PlayMatchRequest request,

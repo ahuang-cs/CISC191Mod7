@@ -31,6 +31,9 @@ public class GameController {
     private Label winnerLabel;
 
     @FXML
+    private Label matchSummaryLabel;
+
+    @FXML
     private TextArea matchLog;
 
     @FXML
@@ -184,6 +187,28 @@ public class GameController {
         } else {
             winnerLabel.setText("Winner: " + match.getWinnerName());
         }
+
+        if (matchSummaryLabel != null) {
+            matchSummaryLabel.setText("Summary: "
+                    + match.buildMatchSummary(difficultyComboBox.getValue(), rankedMatchCheckBox.isSelected()));
+        }
+    }
+
+    /**
+     * TODO 3: Complete this controller helper.
+     *
+     * Return exactly:
+     * Joining ranked match as Ada on Hard difficulty...
+     * or:
+     * Joining casual match as Ada on Normal difficulty...
+     *
+     * Requirements:
+     * - Use "Player" when playerName is null or blank.
+     * - Use "Normal" when difficulty is null or blank.
+     * - Trim playerName and difficulty.
+     */
+    public static String buildJoinLogMessage(String playerName, String difficulty, boolean ranked) {
+        return "TODO: build join log message";
     }
 
     private void runInBackground(Task<?> task) {

@@ -17,9 +17,11 @@ mvn -B -pl game-client test
 
 Suggested manual grading items:
 
-1. Student completed the FXML ranked match checkbox.
-2. Student wired the checkbox into `GameController`.
-3. Student extended the `.proto` file with ranked match data.
-4. Student updated both client and server gRPC logic.
-5. Student added client-side MVC validation for special move.
-6. Student completed README reflection questions.
+1. Student completed the FXML match summary label.
+2. Student completed the MVC summary helper in `MatchViewModel`.
+3. Student completed and used the controller join-log helper.
+4. Student completed and used the gRPC client request helper.
+5. Student extended both `.proto` files with the `summary` field.
+6. Student completed the server summary helper and set the summary on `JoinMatchResponse`.
+7. Student verified the app still joins, plays, resets, and loads history.
+8. Student completed README reflection questions.

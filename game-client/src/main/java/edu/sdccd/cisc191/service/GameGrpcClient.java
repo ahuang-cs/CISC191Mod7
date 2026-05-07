@@ -44,6 +44,24 @@ public class GameGrpcClient {
         };
     }
 
+    /**
+     * TODO 4: Complete this client-side gRPC helper, then use it from joinMatchTask.
+     *
+     * Requirements:
+     * - Build and return a JoinMatchRequest.
+     * - Use "Player" when playerName is null or blank.
+     * - Use "Normal" when difficulty is null or blank.
+     * - Trim playerName and difficulty.
+     * - Preserve the ranked value.
+     */
+    public static JoinMatchRequest buildJoinMatchRequest(String playerName, String difficulty, boolean ranked) {
+        return JoinMatchRequest.newBuilder()
+                .setPlayerName("TODO")
+                .setDifficulty("TODO")
+                .setRanked(false)
+                .build();
+    }
+
     public Task<MatchResultResponse> playMatchTask(
             String matchId,
             String playerName
