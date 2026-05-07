@@ -23,5 +23,9 @@ Suggested manual grading items:
 4. Student completed and used the gRPC client request helper.
 5. Student extended both `.proto` files with the `summary` field.
 6. Student completed the server summary helper and set the summary on `JoinMatchResponse`.
-7. Student verified the app still joins, plays, resets, and loads history.
-8. Student completed README reflection questions.
+7. Student completed the thread-safe model completed-match counter.
+8. Student completed the JavaFX Application Thread helper using `Platform.isFxApplicationThread()` and `Platform.runLater(action)`.
+9. Student completed the thread-safe server statistics class using `AtomicInteger` or synchronized methods.
+10. Student verified the app still joins, plays, resets, and loads history.
+11. Student completed peer review one week after the lab due date.
+12. Student completed README reflection questions.

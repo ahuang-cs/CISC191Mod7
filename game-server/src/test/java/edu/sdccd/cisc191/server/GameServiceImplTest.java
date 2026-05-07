@@ -9,6 +9,10 @@ import edu.sdccd.cisc191.grpc.PlayMatchRequest;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class GameServiceImplTest {
@@ -117,6 +121,30 @@ class GameServiceImplTest {
         );
 
         assertEquals("No match", summary);
+    }
+
+    @Test
+    void serverStatisticsTrackConcurrentJoins() throws Exception {
+        GameServiceImpl service = new GameServiceImpl();
+        int totalJoins = 250;
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        for (int i = 0; i < totalJoins; i++) {
+            int playerNumber = i;
+            executorService.submit(() -> service.joinMatch(
+                    JoinMatchRequest.newBuilder()
+                            .setPlayerName("Player" + playerNumber)
+                            .setDifficulty("Normal")
+                            .build(),
+                    new TestObserver<>()
+            ));
+        }
+
+        executorService.shutdown();
+        assertTrue(executorService.awaitTermination(5, TimeUnit.SECONDS));
+
+        assertEquals(totalJoins, service.getStatisticsForTesting().getJoinedMatchCount(),
+                "TODO 9: gRPC request threads should update shared server statistics safely.");
     }
 
     private static class TestObserver<T> implements StreamObserver<T> {

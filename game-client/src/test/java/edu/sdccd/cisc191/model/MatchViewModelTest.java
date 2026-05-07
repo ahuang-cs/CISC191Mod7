@@ -2,6 +2,14 @@ package edu.sdccd.cisc191.model;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class MatchViewModelTest {
@@ -82,4 +90,35 @@ class MatchViewModelTest {
         assertEquals("No match", model.buildMatchSummary("   ", false));
     }
 
+
+    @Test
+    void recordCompletedMatchUsesThreadSafeCounterDesign() throws Exception {
+        Method method = MatchViewModel.class.getDeclaredMethod("recordCompletedMatchThreadSafely", String.class);
+
+        boolean hasAtomicIntegerField = Arrays.stream(MatchViewModel.class.getDeclaredFields())
+                .anyMatch(field -> field.getType().equals(AtomicInteger.class));
+        boolean methodIsSynchronized = Modifier.isSynchronized(method.getModifiers());
+
+        assertTrue(hasAtomicIntegerField || methodIsSynchronized,
+                "TODO 7: Use an AtomicInteger field or make recordCompletedMatchThreadSafely synchronized.");
+    }
+
+    @Test
+    void recordCompletedMatchDoesNotLoseConcurrentUpdates() throws Exception {
+        MatchViewModel model = new MatchViewModel();
+        int totalUpdates = 1_000;
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+        for (int i = 0; i < totalUpdates; i++) {
+            executorService.submit(() -> model.recordCompletedMatchThreadSafely("Ada"));
+        }
+
+        executorService.shutdown();
+        assertTrue(executorService.awaitTermination(5, TimeUnit.SECONDS));
+
+        assertEquals(totalUpdates, model.getCompletedMatchCount(),
+                "TODO 7: The completed-match count should not lose updates when many threads record results.");
+        assertTrue(model.isMatchOver());
+        assertEquals("Ada", model.getWinnerName());
+    }
 }

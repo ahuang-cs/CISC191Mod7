@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ProtoContractTest {
+class ProtoContractTodoTest {
 
     @Test
     void clientProtoAddsSummaryToJoinMatchResponse() throws IOException {

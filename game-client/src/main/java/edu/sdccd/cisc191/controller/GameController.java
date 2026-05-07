@@ -5,6 +5,7 @@ import edu.sdccd.cisc191.grpc.MatchHistoryResponse;
 import edu.sdccd.cisc191.grpc.MatchResultResponse;
 import edu.sdccd.cisc191.model.MatchViewModel;
 import edu.sdccd.cisc191.service.GameGrpcClient;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -115,8 +116,7 @@ public class GameController {
         task.setOnSucceeded(event -> {
             MatchResultResponse response = task.getValue();
 
-            match.setWinnerName(response.getWinnerName());
-            match.setMatchOver(true);
+            match.recordCompletedMatchThreadSafely(response.getWinnerName());
 
             statusLabel.setText(response.getPlayerWon()
                     ? "Status: You won!"
@@ -179,19 +179,21 @@ public class GameController {
     }
 
     private void updateView() {
-        playerLabel.setText("Player: " + match.getPlayer().getName());
-        opponentLabel.setText("Opponent: " + match.getOpponent().getName());
+        runOnFxThread(() -> {
+            playerLabel.setText("Player: " + match.getPlayer().getName());
+            opponentLabel.setText("Opponent: " + match.getOpponent().getName());
 
-        if (match.getWinnerName().isBlank()) {
-            winnerLabel.setText("Winner: TBD");
-        } else {
-            winnerLabel.setText("Winner: " + match.getWinnerName());
-        }
+            if (match.getWinnerName().isBlank()) {
+                winnerLabel.setText("Winner: TBD");
+            } else {
+                winnerLabel.setText("Winner: " + match.getWinnerName());
+            }
 
-        if (matchSummaryLabel != null) {
-            matchSummaryLabel.setText("Summary: "
-                    + match.buildMatchSummary(difficultyComboBox.getValue(), rankedMatchCheckBox.isSelected()));
-        }
+            if (matchSummaryLabel != null) {
+                matchSummaryLabel.setText("Summary: "
+                        + match.buildMatchSummary(difficultyComboBox.getValue(), rankedMatchCheckBox.isSelected()));
+            }
+        });
     }
 
     /**
@@ -209,6 +211,21 @@ public class GameController {
      */
     public static String buildJoinLogMessage(String playerName, String difficulty, boolean ranked) {
         return "TODO: build join log message";
+    }
+
+    /**
+     * TODO 8: Complete this helper so UI updates are safe from any thread.
+     *
+     * JavaFX controls must be changed on the JavaFX Application Thread.
+     * Requirements:
+     * - If action is null, do nothing.
+     * - If already on the JavaFX Application Thread, run action immediately.
+     * - Otherwise, schedule it with Platform.runLater(action).
+     */
+    public static void runOnFxThread(Runnable action) {
+        if (action != null) {
+            action.run();
+        }
     }
 
     private void runInBackground(Task<?> task) {

@@ -7,6 +7,10 @@ public class MatchViewModel {
     private boolean matchOver;
     private String winnerName = "";
 
+    // TODO 7: Make this shared counter thread-safe.
+    // Use either an AtomicInteger field or synchronized methods so background tasks cannot lose updates.
+    private int completedMatchCount = 0;
+
     public String getMatchId() {
         return matchId;
     }
@@ -37,6 +41,29 @@ public class MatchViewModel {
 
     public void setWinnerName(String winnerName) {
         this.winnerName = winnerName == null ? "" : winnerName;
+    }
+
+    public int getCompletedMatchCount() {
+        return completedMatchCount;
+    }
+
+    /**
+     * TODO 7: Complete this method using thread-safe programming.
+     *
+     * This model may be updated after JavaFX background tasks finish. Make sure concurrent
+     * calls do not lose completed-match updates. You may use synchronized methods or an
+     * AtomicInteger.
+     *
+     * Requirements:
+     * - Increase the completed match count exactly once per call.
+     * - Store the winner name using the existing null-safe setter.
+     * - Mark the match as over.
+     * - Protect shared state from race conditions.
+     */
+    public void recordCompletedMatchThreadSafely(String winnerName) {
+        completedMatchCount = completedMatchCount + 1;
+        setWinnerName(winnerName);
+        matchOver = true;
     }
 
     public boolean hasJoinedMatch() {
@@ -70,5 +97,6 @@ public class MatchViewModel {
         opponent.setName("Opponent");
         matchOver = false;
         winnerName = "";
+        completedMatchCount = 0;
     }
 }

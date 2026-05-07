@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
 
     private final Map<String, ServerMatch> matches = new ConcurrentHashMap<>();
+    private final MatchStatistics statistics = new MatchStatistics();
     private final Random random = new Random();
 
     @Override
@@ -44,6 +45,7 @@ public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
         );
 
         matches.put(matchId, match);
+        statistics.recordJoin();
 
         JoinMatchResponse response = JoinMatchResponse.newBuilder()
                 .setMatchId(matchId)
@@ -101,6 +103,7 @@ public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
         }
 
         boolean playerWon = random.nextBoolean();
+        statistics.recordCompletion();
 
         String winner = playerWon ? match.playerName() : match.opponentName();
         String loser = playerWon ? match.opponentName() : match.playerName();
@@ -135,6 +138,10 @@ public class GameServiceImpl extends GameServiceGrpc.GameServiceImplBase {
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+    }
+
+    public MatchStatistics getStatisticsForTesting() {
+        return statistics;
     }
 
     private record ServerMatch(
